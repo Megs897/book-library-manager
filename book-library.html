@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Book Library Manager</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 320px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .form input, .form button, .form select {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .library {
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .book {
+      background: white;
+      border-left: 5px solid #3498db;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .book-info {
+      flex-grow: 1;
+    }
+
+    .book-info p {
+      margin: 4px 0;
+    }
+
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .buttons button {
+      padding: 6px 8px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .read {
+      background-color: #2ecc71;
+      color: white;
+    }
+
+    .unread {
+      background-color: #e74c3c;
+      color: white;
+    }
+
+    .delete {
+      background-color: #555;
+      color: white;
+    }
+
+    input[type="search"] {
+      width: 300px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #aaa;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📚 Book Library Manager</h1>
+
+  <input type="search" id="search" placeholder="Search by title or author..." />
+
+  <div class="form">
+    <input type="text" id="title" placeholder="Book Title" required />
+    <input type="text" id="author" placeholder="Author" required />
+    <input type="number" id="pages" placeholder="Pages" required />
+    <select id="read">
+      <option value="unread">Not Read</option>
+      <option value="read">Read</option>
+    </select>
+    <button onclick="addBook()">Add Book</button>
+  </div>
+
+  <div class="library" id="library"></div>
+
+  <script>
+    let books = JSON.parse(localStorage.getItem("books")) || [];
+
+    function saveBooks() {
+      localStorage.setItem("books", JSON.stringify(books));
+    }
+
+    function renderBooks(filter = "") {
+      const library = document.getElementById("library");
+      library.innerHTML = "";
+
+      const filteredBooks = books.filter(book =>
+        book.title.toLowerCase().includes(filter) ||
+        book.author.toLowerCase().includes(filter)
+      );
+
+      filteredBooks.forEach((book, index) => {
+        const bookDiv = document.createElement("div");
+        bookDiv.className = "book";
+
+        const info = document.createElement("div");
+        info.className = "book-info";
+        info.innerHTML = `
+          <p><strong>📖 ${book.title}</strong></p>
+          <p>👤 ${book.author}</p>
+          <p>📄 ${book.pages} pages</p>
+          <p>Status: <strong>${book.read ? "✅ Read" : "❌ Not Read"}</strong></p>
+        `;
+
+        const btns = document.createElement("div");
+        btns.className = "buttons";
+
+        const toggleBtn = document.createElement("button");
+        toggleBtn.className = book.read ? "unread" : "read";
+        toggleBtn.innerText = book.read ? "Mark Unread" : "Mark Read";
+        toggleBtn.onclick = () => {
+          book.read = !book.read;
+          saveBooks();
+          renderBooks(document.getElementById("search").value.toLowerCase());
+        };
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "delete";
+        deleteBtn.innerText = "Delete";
+        deleteBtn.onclick = () => {
+          books.splice(index, 1);
+          saveBooks();
+          renderBooks(document.getElementById("search").value.toLowerCase());
+        };
+
+        btns.appendChild(toggleBtn);
+        btns.appendChild(deleteBtn);
+
+        bookDiv.appendChild(info);
+        bookDiv.appendChild(btns);
+        library.appendChild(bookDiv);
+      });
+    }
+
+    function addBook() {
+      const title = document.getElementById("title").value.trim();
+      const author = document.getElementById("author").value.trim();
+      const pages = document.getElementById("pages").value;
+      const read = document.getElementById("read").value === "read";
+
+      if (!title || !author || !pages) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      books.push({ title, author, pages, read });
+      saveBooks();
+      renderBooks();
+      document.getElementById("title").value = "";
+      document.getElementById("author").value = "";
+      document.getElementById("pages").value = "";
+      document.getElementById("read").value = "unread";
+    }
+
+    document.getElementById("search").addEventListener("input", (e) => {
+      const filter = e.target.value.toLowerCase();
+      renderBooks(filter);
+    });
+
+    // Initial render
+    renderBooks();
+  </script>
+
+</body>
+</html>
